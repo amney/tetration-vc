@@ -132,7 +132,7 @@ func main() {
 	// CSV writer
 	body := new(bytes.Buffer)
 	w := csv.NewWriter(body)
-	w.Write([]string{"IP", "VRF", "VM Name", "vSphere Tags"})
+	w.Write([]string{"IP", "VRF", "VM Name", "VM Tags"})
 
 	// Tab writer for nicely formatted output
 	tw := tabwriter.NewWriter(os.Stdout, 2, 0, 2, ' ', 0)
@@ -219,7 +219,7 @@ func main() {
 		go func() {
 			written := false
 			body.Reset()
-			w.Write([]string{"IP", "VRF", "VM Name", "vSphere Tags"})
+			w.Write([]string{"IP", "VRF", "VM Name", "VM Tags"})
 			for {
 				select {
 				case row := <-rows:
@@ -232,7 +232,7 @@ func main() {
 						response := h4.Upload(body.Bytes(), true, true)
 						fmt.Printf(" ...%s\n", response)
 						body.Reset()
-						w.Write([]string{"IP", "VRF", "VM Name", "vSphere Tags"})
+						w.Write([]string{"IP", "VRF", "VM Name", "VM Tags"})
 						written = false
 					}
 				}
