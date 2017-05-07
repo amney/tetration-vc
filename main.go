@@ -10,6 +10,7 @@ import (
 	"github.com/vmware/govmomi"
 	"github.com/vmware/govmomi/event"
 	"github.com/vmware/govmomi/find"
+	"github.com/vmware/govmomi/object"
 	"github.com/vmware/govmomi/property"
 	"github.com/vmware/govmomi/vim25/mo"
 	"github.com/vmware/govmomi/vim25/types"
@@ -50,19 +51,19 @@ func (vc *VCenter) GetURL() (*url.URL, error) {
 	return u, err
 }
 
-var subscribeDescription = "Subscribe to VM events (rename and edit tags)"
-var subscribeFlag = flag.Bool("subscribe", false, subscribeDescription)
+type ByName []mo.VirtualMachine
+
+func (n ByName) Len() int           { return len(n) }
+func (n ByName) Swap(i, j int)      { n[i], n[j] = n[j], n[i] }
+func (n ByName) Less(i, j int) bool { return n[i].Name < n[j].Name }
 
 func exit(err error) {
 	fmt.Fprintf(os.Stderr, "Error: %s\n", err)
 	os.Exit(1)
 }
 
-type ByName []mo.VirtualMachine
-
-func (n ByName) Len() int           { return len(n) }
-func (n ByName) Swap(i, j int)      { n[i], n[j] = n[j], n[i] }
-func (n ByName) Less(i, j int) bool { return n[i].Name < n[j].Name }
+var subscribeDescription = "Subscribe to VM events (rename and edit tags)"
+var subscribeFlag = flag.Bool("subscribe", false, subscribeDescription)
 
 func main() {
 	flag.Parse()
@@ -129,6 +130,18 @@ func main() {
 		exit(err)
 	}
 
+	// Use Custom Field Manager to Retrieve int32 -> string mappings for Custom Fields
+	mgr := object.NewCustomFieldsManager(c.Client)
+	var customFields []types.CustomFieldDef
+	customFields, err = mgr.Field(ctx)
+	if err != nil {
+		exit(err)
+	}
+	fields := make(map[int32]string)
+	for _, field := range customFields {
+		fields[field.Key] = field.Name
+	}
+
 	// CSV writer
 	body := new(bytes.Buffer)
 	w := csv.NewWriter(body)
@@ -152,8 +165,11 @@ func main() {
 					for _, kv := range vm.CustomValue {
 						ref := reflect.ValueOf(kv).Elem()
 						val := ref.FieldByName("Value")
-						fmt.Fprintf(tw, "\t%s\n", val)
-						b.WriteString(val.String())
+						key := fields[kv.GetCustomFieldValue().Key]
+
+						pair := fmt.Sprintf("%s=%s", key, val)
+						fmt.Fprintf(tw, "\t%s\n", pair)
+						b.WriteString(pair)
 						b.WriteString(";")
 					}
 				}
@@ -201,11 +217,13 @@ func main() {
 								for _, kv := range vm.CustomValue {
 									ref := reflect.ValueOf(kv).Elem()
 									val := ref.FieldByName("Value")
-									b.WriteString(val.String())
+									key := fields[kv.GetCustomFieldValue().Key]
+
+									pair := fmt.Sprintf("%s=%s", key, val)
+									fmt.Fprintf(tw, "\t%s\n", pair)
+									b.WriteString(pair)
 									b.WriteString(";")
 								}
-							} else {
-								b.WriteString("<none>")
 							}
 							rows <- []string{addr, "Default", vm.Name, b.String()}
 							fmt.Printf("Found eligible event for VM: %s (IP: %s) (Tags: %s)\n", vm.Name, addr, b.String())
