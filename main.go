@@ -23,12 +23,13 @@ import (
 	"time"
 )
 
-const EXPORT_INTERVAL = time.Second * 5
+const EXPORT_INTERVAL = time.Minute
 
 type VCenter struct {
-	Username string
-	Password string
-	URL      string
+	Username   string
+	Password   string
+	URL        string
+	Datacenter string
 }
 
 type Tetration struct {
@@ -79,6 +80,7 @@ func main() {
 	fmt.Printf("  %s: %s\n", "URL", settings.VCenter.URL)
 	fmt.Printf("  %s: %s\n", "Username", settings.VCenter.Username)
 	fmt.Printf("  %s: <hidden>\n", "Password")
+	fmt.Printf("  %s: %s\n", "Datacenter", settings.VCenter.Datacenter)
 	fmt.Printf(" Tetration:\n")
 	fmt.Printf("  %s: %s\n", "URL", settings.Tetration.URL)
 	fmt.Printf("  %s: %s\n", "Key", settings.Tetration.Key)
@@ -98,7 +100,7 @@ func main() {
 	f := find.NewFinder(c.Client, true)
 
 	// Find one and only datacenter
-	dc, err := f.Datacenter(ctx, "Datacenter")
+	dc, err := f.Datacenter(ctx, settings.VCenter.Datacenter)
 	if err != nil {
 		exit(err)
 	}

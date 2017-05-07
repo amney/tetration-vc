@@ -2,7 +2,8 @@
     "vcenter": {
         "url": "https://1.2.3.4/sdk",
         "username": "administrator@vsphere.local",
-        "password": "changeme"
+        "password": "changeme",
+        "datacenter": "Datacenter"
     },
     "tetration": {
         "url": "https://5.6.7.8",
