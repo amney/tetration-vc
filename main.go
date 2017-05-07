@@ -177,7 +177,7 @@ func main() {
 
 	fmt.Fprintf(tw, " ...%s\n", response)
 
-	if !*subscribeFlag {
+	if *subscribeFlag {
 		fmt.Println("=================================")
 		fmt.Println("Subscribing to VM events")
 		fmt.Println("=================================")
