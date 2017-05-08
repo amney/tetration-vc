@@ -11,7 +11,7 @@ Virtual Machine rename and tag edit events, pushing any changes to Tetration if 
 
 ## Installing
 
-Requirements: `golang 1.7+`
+> Requirements: `golang 1.7+`
 
 Download the package and dependencies
 
@@ -37,10 +37,41 @@ Launch the Tetration ⇐ vCenter App
 
 
 ## *Tags
-VMWare supports a number of different "tag" options in vCenter. This application
-will pull tags that are referred to in the VMWare C# client as "Custom
-Attributes".
+VMWare supports a number of different "tag" options across the range of
+virtualization products.
+
+This application will pull tags that are referred to in the vSphere desktop
+client as "Custom Attributes".
 
 Prior to 6.5 "Custom Attributes" are not visible in the vCenter Web Client. In
 6.5 they are visible. If you are using vCenter version < 6.5 and wish to view
 tags in the web client, there are plugins available online to restore functionality.
+
+Custom Attributes are attached to a Virtual Machine and are stored in a Key =>
+Value format. In Tetration, we use one annotation to represent one or more
+custom attribute(s). Multiple values will be packed together in the format
+`key1=val1;key2=val2;`. 
+
+## Usage
+Inventory items will contain two new annotations: "VM Name" and "VM Tags". 
+
+These annotations will be non-empty for matching inventory items.
+
+Use the "equals" operator to search inventory items with an exact Virtual
+Machine name:
+
+`*VM Name = vm-1`
+
+Alternatively, search for inventory items that match a Virtual Machine name
+pattern:
+
+`*VM Name contains vm-`
+
+Use the "Contains" operator to search for inventory items matching a specific
+key, value, or key value pair like:
+
+"`*VM Tags contains key2`" 
+
+"`*VM Tags contains val2`" 
+
+"`*VM Tags contains key2=val2`" 
