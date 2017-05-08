@@ -154,27 +154,25 @@ func main() {
 	sort.Sort(ByName(vmt))
 	for _, vm := range vmt {
 		addr := ""
-		if vm.Guest != nil {
-			if &vm.Guest.IpAddress != nil {
-				addr = vm.Guest.IpAddress
-				fmt.Fprintf(tw, "%s\t-\t%v\n", addr, vm.Name)
-				b := new(bytes.Buffer)
-				if len(vm.CustomValue) > 0 {
-					fmt.Fprintf(tw, "\tTags\n")
-					fmt.Fprintf(tw, "\t==========================\n")
-					for _, kv := range vm.CustomValue {
-						ref := reflect.ValueOf(kv).Elem()
-						val := ref.FieldByName("Value")
-						key := fields[kv.GetCustomFieldValue().Key]
+		if vm.Guest != nil && &vm.Guest.IpAddress != nil {
+			addr = vm.Guest.IpAddress
+			fmt.Fprintf(tw, "%s\t-\t%v\n", addr, vm.Name)
+			b := new(bytes.Buffer)
+			if len(vm.CustomValue) > 0 {
+				fmt.Fprintf(tw, "\tTags\n")
+				fmt.Fprintf(tw, "\t==========================\n")
+				for _, kv := range vm.CustomValue {
+					ref := reflect.ValueOf(kv).Elem()
+					val := ref.FieldByName("Value")
+					key := fields[kv.GetCustomFieldValue().Key]
 
-						pair := fmt.Sprintf("%s=%s", key, val)
-						fmt.Fprintf(tw, "\t%s\n", pair)
-						b.WriteString(pair)
-						b.WriteString(";")
-					}
+					pair := fmt.Sprintf("%s=%s", key, val)
+					fmt.Fprintf(tw, "\t%s\n", pair)
+					b.WriteString(pair)
+					b.WriteString(";")
 				}
-				w.Write([]string{addr, "Default", vm.Name, b.String()})
 			}
+			w.Write([]string{addr, "Default", vm.Name, b.String()})
 		}
 
 	}
@@ -209,25 +207,23 @@ func main() {
 					var vm mo.VirtualMachine
 					pc.RetrieveOne(ctx, vmRef, []string{"name", "guest.ipAddress", "customValue"}, &vm)
 
-					if vm.Guest != nil {
-						if &vm.Guest.IpAddress != nil {
-							addr := vm.Guest.IpAddress
-							b := new(bytes.Buffer)
-							if len(vm.CustomValue) > 0 {
-								for _, kv := range vm.CustomValue {
-									ref := reflect.ValueOf(kv).Elem()
-									val := ref.FieldByName("Value")
-									key := fields[kv.GetCustomFieldValue().Key]
+					if vm.Guest != nil && &vm.Guest.IpAddress != nil {
+						addr := vm.Guest.IpAddress
+						b := new(bytes.Buffer)
+						if len(vm.CustomValue) > 0 {
+							for _, kv := range vm.CustomValue {
+								ref := reflect.ValueOf(kv).Elem()
+								val := ref.FieldByName("Value")
+								key := fields[kv.GetCustomFieldValue().Key]
 
-									pair := fmt.Sprintf("%s=%s", key, val)
-									fmt.Fprintf(tw, "\t%s\n", pair)
-									b.WriteString(pair)
-									b.WriteString(";")
-								}
+								pair := fmt.Sprintf("%s=%s", key, val)
+								fmt.Fprintf(tw, "\t%s\n", pair)
+								b.WriteString(pair)
+								b.WriteString(";")
 							}
-							rows <- []string{addr, "Default", vm.Name, b.String()}
-							fmt.Printf("Found eligible event for VM: %s (IP: %s) (Tags: %s)\n", vm.Name, addr, b.String())
 						}
+						rows <- []string{addr, "Default", vm.Name, b.String()}
+						fmt.Printf("Found eligible event for VM: %s (IP: %s) (Tags: %s)\n", vm.Name, addr, b.String())
 					}
 				}
 			}
