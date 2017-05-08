@@ -131,16 +131,20 @@ func main() {
 	}
 
 	// Use Custom Field Manager to Retrieve int32 -> string mappings for Custom Fields
-	mgr := object.NewCustomFieldsManager(c.Client)
-	var customFields []types.CustomFieldDef
-	customFields, err = mgr.Field(ctx)
-	if err != nil {
-		exit(err)
-	}
+
 	fields := make(map[int32]string)
-	for _, field := range customFields {
-		fields[field.Key] = field.Name
+	getFields := func() {
+		mgr := object.NewCustomFieldsManager(c.Client)
+		var customFields []types.CustomFieldDef
+		customFields, err = mgr.Field(ctx)
+		if err != nil {
+			exit(err)
+		}
+		for _, field := range customFields {
+			fields[field.Key] = field.Name
+		}
 	}
+	getFields()
 
 	// CSV writer
 	body := new(bytes.Buffer)
@@ -164,7 +168,11 @@ func main() {
 				for _, kv := range vm.CustomValue {
 					ref := reflect.ValueOf(kv).Elem()
 					val := ref.FieldByName("Value")
-					key := fields[kv.GetCustomFieldValue().Key]
+					key, ok := fields[kv.GetCustomFieldValue().Key]
+					if !ok {
+						getFields()
+						key = fields[kv.GetCustomFieldValue().Key]
+					}
 
 					pair := fmt.Sprintf("%s=%s", key, val)
 					fmt.Fprintf(tw, "\t%s\n", pair)
@@ -214,7 +222,11 @@ func main() {
 							for _, kv := range vm.CustomValue {
 								ref := reflect.ValueOf(kv).Elem()
 								val := ref.FieldByName("Value")
-								key := fields[kv.GetCustomFieldValue().Key]
+								key, ok := fields[kv.GetCustomFieldValue().Key]
+								if !ok {
+									getFields()
+									key = fields[kv.GetCustomFieldValue().Key]
+								}
 
 								pair := fmt.Sprintf("%s=%s", key, val)
 								fmt.Fprintf(tw, "\t%s\n", pair)
